@@ -149,8 +149,38 @@ resource "aws_security_group_rule" "allow_ingress_MySQL" {
   security_group_id = aws_security_group.rds-sg.id
   source_security_group_id = aws_security_group.wordpress_sg.id
 }
-# Create a MySQL DB instance named ‘mysql’: 20GB, gp2, t2.micro instance class, username=admin, password=adminadmin. Use ‘aws_db_subnet_group’ resource to define private subnets where the DB instance will be created.
+#Use ‘aws_db_subnet_group’ resource to define private subnets where the DB instance will be created.
+resource "aws_db_subnet_group" "mysql_subnet_group" {
+  name       = "mysql-subnet-group"
+  subnet_ids = [
+    aws_subnet.priv-sub-1.id,
+    aws_subnet.priv-sub-2.id,
+    aws_subnet.priv-sub-3.id
+  ]
 
+  tags = {
+    Name = "mysql-subnet-group"
+  }
+} 
+
+# Create a MySQL DB instance named ‘mysql’: 20GB, gp2, t2.micro instance class, username=admin, password=adminadmin. 
+resource "aws_db_instance" "mysql" {
+  allocated_storage    = 20
+  db_name              = "mysql"
+  engine               = "mysql"
+  engine_version       = "8.0"
+  instance_class       = "db.t2.micro"
+  username             = "admin"
+  password             = "adminadmin"
+  parameter_group_name = "default.mysql8.0"
+  db_subnet_group_name = aws_db_subnet_group.mysql_subnet_group.name
+  skip_final_snapshot  = true
+  storage_type         = "gp2"
+
+  tags = {
+    Name = "mysql"
+  }
+}
  
 
 # You have to install wordpress on 'wordpress-ec2'. Desired result: on wordpress-ec2-public-ip/blog address, you have to see wordpress installation page. You can install wordpress manually or through user_data. 
