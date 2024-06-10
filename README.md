@@ -1,4 +1,4 @@
-# wordpress
+<!-- # wordpress
 Wordpress
 TASK #1:
 
@@ -26,4 +26,4 @@ Create a MySQL DB instance named ‘mysql’: 20GB, gp2, t2.micro instance class
 
 You have to install wordpress on 'wordpress-ec2'. Desired result: on wordpress-ec2-public-ip/blog address, you have to see wordpress installation page. You can install wordpress manually or through user_data. 
 
-Submit your Terraform code.
+Submit your Terraform code. -->
