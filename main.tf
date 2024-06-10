@@ -1,12 +1,13 @@
-# Create a VPC named ‘wordpress-vpc’ (add name tag). (X)
+# Create a VPC named ‘wordpress-vpc’ (add name tag).
 resource "aws_vpc" "wordpress-vpc" {
-  cidr_block       = "10.0.0.0/16"
+  cidr_block = "10.0.0.0/16"
 
   tags = {
     Name = "wordpress-vpc"
   }
 }
-# Create an Internet Gateway named ‘wordpress_igw’ (add name tag). (X)
+
+# Create an Internet Gateway named ‘wordpress_igw’ (add name tag).
 resource "aws_internet_gateway" "wordpress_igw" {
   vpc_id = aws_vpc.wordpress-vpc.id
 
@@ -14,103 +15,154 @@ resource "aws_internet_gateway" "wordpress_igw" {
     Name = "wordpress_igw"
   }
 }
-# Create a route table named ‘wordpess-rt’ and add Internet Gateway route to it (add name tag). (X)
-resource "aws_route_table" "wordpess-rt" {
+
+# Create a route table named ‘wordpress_rt’ and add Internet Gateway route to it (add name tag).
+resource "aws_route_table" "wordpress_rt" {
   vpc_id = aws_vpc.wordpress-vpc.id
 
-  # since this is exactly the route AWS will create, the route will be adopted
   route {
-    cidr_block = "0.0.0.0/0"  # Corrected to allow internet traffic
+    cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.wordpress_igw.id
   }
 
   tags = {
-    Name = "wordpess-rt"
+    Name = "wordpress-rt"
   }
 }
-# Create 3 public and 3 private subnets in the us-east region (add name tag). Associate them with the ‘wordpess-rt’ route table. What subnets should be associated with the ‘wordpess-rt’ route table? What about other subnets? Use AWS documentation. (X)
+
+# Create 3 public and 3 private subnets in the us-east region (add name tag).
 # PUBLIC
-resource "aws_subnet" "pub-sub-1" {
-  vpc_id = aws_vpc.wordpress-vpc.id
-  cidr_block = "10.0.0.0/18"
+resource "aws_subnet" "pub_sub_1" {
+  vpc_id            = aws_vpc.wordpress-vpc.id
+  cidr_block        = "10.0.0.0/18"
+  availability_zone = "us-east-1a"
 
   tags = {
     Name = "pub-sub-1"
   }
 }
 
-resource "aws_subnet" "pub-sub-2" {
-  vpc_id = aws_vpc.wordpress-vpc.id
-  cidr_block = "10.0.128.0/18"
+resource "aws_subnet" "pub_sub_2" {
+  vpc_id            = aws_vpc.wordpress-vpc.id
+  cidr_block        = "10.0.64.0/18"
+  availability_zone = "us-east-1b"
 
   tags = {
     Name = "pub-sub-2"
   }
 }
 
-resource "aws_subnet" "pub-sub-3" {
-  vpc_id = aws_vpc.wordpress-vpc.id
-  cidr_block = "10.0.224.0/20"
+resource "aws_subnet" "pub_sub_3" {
+  vpc_id            = aws_vpc.wordpress-vpc.id
+  cidr_block        = "10.0.128.0/18"
+  availability_zone = "us-east-1c"
 
   tags = {
     Name = "pub-sub-3"
   }
 }
 
-#Private:
-resource "aws_subnet" "priv-sub-1" {
-  vpc_id = aws_vpc.wordpress-vpc.id
-  cidr_block = "10.0.240.0/21"
+# PRIVATE
+resource "aws_subnet" "priv_sub_1" {
+  vpc_id            = aws_vpc.wordpress-vpc.id
+  cidr_block        = "10.0.192.0/21"
+  availability_zone = "us-east-1a"
 
   tags = {
     Name = "priv-sub-1"
   }
 }
 
-resource "aws_subnet" "priv-sub-2" {
-  vpc_id = aws_vpc.wordpress-vpc.id
-  cidr_block = "10.0.248.0/22"
+resource "aws_subnet" "priv_sub_2" {
+  vpc_id            = aws_vpc.wordpress-vpc.id
+  cidr_block        = "10.0.200.0/21"
+  availability_zone = "us-east-1b"
 
   tags = {
     Name = "priv-sub-2"
   }
 }
 
-resource "aws_subnet" "priv-sub-3" {
-  vpc_id = aws_vpc.wordpress-vpc.id
-  cidr_block = "10.0.252.0/22"
+resource "aws_subnet" "priv_sub_3" {
+  vpc_id            = aws_vpc.wordpress-vpc.id
+  cidr_block        = "10.0.208.0/21"
+  availability_zone = "us-east-1c"
 
   tags = {
     Name = "priv-sub-3"
   }
 }
 
-# Create a security group named ‘wordpress-sg’ and open HTTP, HTTPS, SSH ports to the Internet (add name tag). Define port numbers in a variable named ‘ingress_ports’. (X)
-variable "ingress_ports" {
-  description = "List of ingress ports to be opened"
-  type        = list(string)
-  default     = ["80", "443", "22"]
+# Associate subnets with the route table.
+resource "aws_route_table_association" "pub_rt_assoc_1" {
+  subnet_id      = aws_subnet.pub_sub_1.id
+  route_table_id = aws_route_table.wordpress_rt.id
 }
 
+resource "aws_route_table_association" "pub_rt_assoc_2" {
+  subnet_id      = aws_subnet.pub_sub_2.id
+  route_table_id = aws_route_table.wordpress_rt.id
+}
+
+resource "aws_route_table_association" "pub_rt_assoc_3" {
+  subnet_id      = aws_subnet.pub_sub_3.id
+  route_table_id = aws_route_table.wordpress_rt.id
+}
+
+resource "aws_route_table_association" "priv_rt_assoc_1" {
+  subnet_id      = aws_subnet.priv_sub_1.id
+  route_table_id = aws_route_table.wordpress_rt.id
+}
+
+resource "aws_route_table_association" "priv_rt_assoc_2" {
+  subnet_id      = aws_subnet.priv_sub_2.id
+  route_table_id = aws_route_table.wordpress_rt.id
+}
+
+resource "aws_route_table_association" "priv_rt_assoc_3" {
+  subnet_id      = aws_subnet.priv_sub_3.id
+  route_table_id = aws_route_table.wordpress_rt.id
+}
+
+# Create a security group named ‘wordpress-sg’ and open HTTP, HTTPS, SSH ports to the Internet (add name tag).
 resource "aws_security_group" "wordpress_sg" {
   name        = "wordpress-sg"
   description = "Security group for WordPress with HTTP, HTTPS, and SSH access"
-  vpc_id = aws_vpc.wordpress-vpc.id 
+  vpc_id      = aws_vpc.wordpress-vpc.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   tags = {
     Name = "wordpress-sg"
   }
 }
 
-resource "aws_security_group_rule" "allow_ingress" {
-  for_each          = toset(var.ingress_ports)
-  type              = "ingress"
-  from_port         = each.value
-  to_port           = each.value
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.wordpress_sg.id
-}
 # Create a key pair named ‘ssh-key’ (you can use your public key).
 resource "aws_key_pair" "ssh_key" {
   key_name   = "ssh-key"
@@ -123,9 +175,9 @@ resource "aws_instance" "wordpress-ec2" {
   instance_type = "t2.micro"
   key_name      = aws_key_pair.ssh_key.key_name
   vpc_security_group_ids = [aws_security_group.wordpress_sg.id]
-  subnet_id = aws_subnet.pub-sub-1.id
-
-  #woedpress and httpd:
+  subnet_id     = aws_subnet.pub_sub_1.id  # You can change this to any of the public subnets
+  associate_public_ip_address = true
+  # WordPress and HTTPD installation:
   user_data = <<-EOF
               #!/bin/bash
               yum update -y
@@ -147,7 +199,7 @@ resource "aws_instance" "wordpress-ec2" {
               sed -i "s/localhost/your_database_endpoint/" wp-config.php
               systemctl restart httpd
               EOF
-              
+
   tags = {
     Name = "wordpress-ec2"
   }
@@ -156,43 +208,49 @@ resource "aws_instance" "wordpress-ec2" {
 # Create a security group named ‘rds-sg’ and open MySQL port and allow traffic only from ‘wordpress-sg’ security group (add name tag).
 resource "aws_security_group" "rds-sg" {
   name        = "rds-sg"
-  description = "Security group for MySQL WordPress that allow traffic only from wordpress-sg security group"
-  vpc_id = aws_vpc.wordpress-vpc.id 
+  description = "Security group for MySQL WordPress that allows traffic only from wordpress-sg security group"
+  vpc_id      = aws_vpc.wordpress-vpc.id
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.wordpress_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   tags = {
     Name = "rds-sg-MySQL"
   }
 }
 
-resource "aws_security_group_rule" "allow_ingress_MySQL" {
-  type                    = "ingress"
-  from_port               = 3306
-  to_port                 = 3306
-  protocol                = "tcp"
-  security_group_id = aws_security_group.rds-sg.id
-  source_security_group_id = aws_security_group.wordpress_sg.id
-}
-#Use ‘aws_db_subnet_group’ resource to define private subnets where the DB instance will be created.
+# Use ‘aws_db_subnet_group’ resource to define private subnets where the DB instance will be created.
 resource "aws_db_subnet_group" "mysql_subnet_group" {
   name       = "mysql-subnet-group"
   subnet_ids = [
-    aws_subnet.priv-sub-1.id,
-    aws_subnet.priv-sub-2.id,
-    aws_subnet.priv-sub-3.id
+    aws_subnet.priv_sub_1.id,
+    aws_subnet.priv_sub_2.id,
+    aws_subnet.priv_sub_3.id
   ]
 
   tags = {
     Name = "mysql-subnet-group"
   }
-} 
+}
 
-# Create a MySQL DB instance named ‘mysql’: 20GB, gp2, t2.micro instance class, username=admin, password=adminadmin. 
-resource "aws_db_instance" "mysql" {
+# Create a MySQL DB instance named ‘mysql_test’: 20GB, gp2, t2.micro instance class, username=admin, password=adminadmin.
+resource "aws_db_instance" "mysql_test" {
   allocated_storage    = 20
-  db_name              = "mysql"
+  db_name              = "mysql_test"
   engine               = "mysql"
   engine_version       = "8.0"
-  instance_class       = "db.t2.micro"
+  instance_class       = "db.t3.micro"
   username             = "admin"
   password             = "adminadmin"
   parameter_group_name = "default.mysql8.0"
@@ -201,17 +259,11 @@ resource "aws_db_instance" "mysql" {
   storage_type         = "gp2"
 
   tags = {
-    Name = "mysql"
+    Name = "mysql_test"
   }
 }
- 
 
-# You have to install wordpress on 'wordpress-ec2'. Desired result: on wordpress-ec2-public-ip/blog address, you have to see wordpress installation page. You can install wordpress manually or through user_data. 
-
-
-
-
-
+# Outputs
 output "vpc_id" {
   value = aws_vpc.wordpress-vpc.id
 }
@@ -221,45 +273,13 @@ output "internet_gateway_id" {
 }
 
 output "route_table_id" {
-  value = aws_route_table.wordpess-rt.id
+  value = aws_route_table.wordpress_rt.id
 }
 
 output "public_subnet_1_id" {
-  value = aws_subnet.pub-sub-1.id
-}
-
-output "public_subnet_2_id" {
-  value = aws_subnet.pub-sub-2.id
-}
-
-output "public_subnet_3_id" {
-  value = aws_subnet.pub-sub-3.id
+  value = aws_subnet.pub_sub_1.id
 }
 
 output "private_subnet_1_id" {
-  value = aws_subnet.priv-sub-1.id
-}
-
-output "private_subnet_2_id" {
-  value = aws_subnet.priv-sub-2.id
-}
-
-output "private_subnet_3_id" {
-  value = aws_subnet.priv-sub-3.id
-}
-
-output "security_group_id" {
-  value = aws_security_group.wordpress_sg.id
-}
-
-output "key_pair_name" {
-  value = aws_key_pair.ssh_key.key_name
-}
-
-output "ec2_instance_id" {
-  value = aws_instance.wordpress-ec2.id
-}
-
-output "ec2_instance_public_ip" {
-  value = aws_instance.wordpress-ec2.public_ip
+  value = aws_subnet.priv_sub_1.id
 }
