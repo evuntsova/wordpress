@@ -1,2 +1,1 @@
-# wordpress
-Wordpress
+#read me
