@@ -125,6 +125,29 @@ resource "aws_instance" "wordpress-ec2" {
   vpc_security_group_ids = [aws_security_group.wordpress_sg.id]
   subnet_id = aws_subnet.pub-sub-1.id
 
+  #woedpress and httpd:
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              amazon-linux-extras install -y php7.2
+              yum install -y httpd mysql php php-mysqlnd wget
+              systemctl start httpd
+              systemctl enable httpd
+              cd /var/www/html
+              wget https://wordpress.org/latest.tar.gz
+              tar -xzf latest.tar.gz
+              cp -r wordpress/* .
+              rm -rf wordpress latest.tar.gz
+              chown -R apache:apache /var/www/html
+              chmod -R 755 /var/www/html
+              cp wp-config-sample.php wp-config.php
+              sed -i "s/database_name_here/your_database_name/" wp-config.php
+              sed -i "s/username_here/your_database_username/" wp-config.php
+              sed -i "s/password_here/your_database_password/" wp-config.php
+              sed -i "s/localhost/your_database_endpoint/" wp-config.php
+              systemctl restart httpd
+              EOF
+              
   tags = {
     Name = "wordpress-ec2"
   }
